@@ -166,7 +166,7 @@ function render() {
         }
         const e = st(r), prov = isProv(r);
         if (we || !isWE(iso)) { n++; if (e === "ok") o++; if (e === "late") l++; }
-        const t = LABEL[e] + (r.hora ? " · " + r.hora : "") + (prov ? " · provisional hasta las 18:00" : "");
+        const t = LABEL[e] + (r.hora ? " · " + r.hora : "") + (prov ? " · podría llegar hasta las 18:00" : "");
         h += `<td class="c ${CLS[e]}${prov ? " prov" : ""}${cw}" title="${t}">${ICON[e]}</td>`;
       }
       h += `<td class="pct">${fmtPct(pct(o, n))}</td><td class="lt">${l || ""}</td></tr>`;
@@ -204,7 +204,7 @@ function renderHoy() {
   const rows = DATA.filter(r => r.fecha === fecha);
   const last = rows.reduce((a, r) => r.reg > a ? r.reg : a, "");
   const title = hasToday ? "Hoy · " + ddmm(fecha) : "Último día con datos · " + ddmm(fecha);
-  const note = hasToday ? (n.min < BARRIDO ? "Provisional hasta las 18:00 (barrido de rezagados)." : "Dato final.") : (n.min < CIERRE ? "Hoy: sin datos aún (el cierre es a las 12:00)." : "Hoy aún no tiene registros.");
+  const note = hasToday ? (n.min < BARRIDO ? "Los \"No llegó\" de hoy aún pueden cambiar a \"Tarde\" hasta las 18:00 (barrido de rezagados)." : "Dato final.") : (n.min < CIERRE ? "Hoy: sin datos aún (el cierre es a las 12:00)." : "Hoy aún no tiene registros.");
   $("hoyT").innerHTML = `${title} <span class="sub">${note}${last ? " Actualizado: " + last.slice(11) : ""}</span>`;
   $("hoy").innerHTML = GRUPOS.map(grp => {
     const gr = rows.filter(r => r.grupo === grp), cnt = { ok: 0, late: 0, no: 0 };
@@ -214,7 +214,7 @@ function renderHoy() {
       const r = gr.find(x => x.sucursal === p);
       if (!r) return `<li class="z"><span>–</span>${p}<em>sin dato</em></li>`;
       const e = st(r), prov = isProv(r);
-      return `<li class="${CLS[e]}${prov ? " prov" : ""}"><span>${ICON[e]}</span>${p}<em>${r.hora ? r.hora + (e === "late" ? " · tarde" : "") : prov ? "provisional" : LABEL[e]}</em></li>`;
+      return `<li class="${CLS[e]}${prov ? " prov" : ""}"><span>${ICON[e]}</span>${p}<em>${r.hora ? r.hora + (e === "late" ? " · tarde" : "") : prov ? "podría llegar" : LABEL[e]}</em></li>`;
     }).join("");
     return `<div class="card"><h2>${grp} <span class="sub">${cnt.ok} a tiempo · ${cnt.late} tarde · ${cnt.no} no llegó</span></h2><ul class="hoyl">${lis}</ul></div>`;
   }).join("");
@@ -225,7 +225,7 @@ function detalle(grp, p) {
   const rs = DATA.filter(r => r.grupo === grp && r.sucursal === p).sort((a, b) => b.fecha.localeCompare(a.fecha));
   $("dT").textContent = `${p} (${grp})`;
   $("dB").innerHTML = "<thead><tr><th>Fecha</th><th>Estado</th><th>Hora llegada</th></tr></thead><tbody>" +
-    rs.map(r => { const e = st(r); return `<tr><td>${ddmm(r.fecha)}</td><td class="${CLS[e]}">${ICON[e]} ${LABEL[e]}${isProv(r) ? " (provisional)" : ""}</td><td>${r.hora || "–"}</td></tr>`; }).join("") + "</tbody>";
+    rs.map(r => { const e = st(r); return `<tr><td>${ddmm(r.fecha)}</td><td class="${CLS[e]}">${ICON[e]} ${LABEL[e]}${isProv(r) ? " (podría llegar)" : ""}</td><td>${r.hora || "–"}</td></tr>`; }).join("") + "</tbody>";
   $("dlg").showModal();
 }
 
