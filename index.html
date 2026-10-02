@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock diario por sucursal · Grupo Pompeyo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div><h1>Llegada diaria de stock por sucursal</h1><div class="sub" id="upd">Cargando…</div></div>
+  <div><span class="sub" id="user"></span> <button id="login" class="pri" hidden>Iniciar sesión</button> <button id="refresh">Actualizar</button></div>
+</header>
+<main>
+  <div id="msg">Cargando datos…</div>
+  <div id="app" hidden>
+    <section class="card filters">
+      <label>Grupo<select id="fGrupo"></select></label>
+      <label>Mes<select id="fMes"></select></label>
+      <label>Sucursal<select id="fSuc"></select></label>
+    </section>
+    <section class="kpis" id="kpis" style="margin-top:16px"></section>
+    <section class="card" style="margin-top:16px">
+      <h2>Matriz sucursal × día <span class="sub">✓ enviado · ✗ no enviado · vacío sin dato</span></h2>
+      <div class="scroll"><table id="matrix"></table></div>
+    </section>
+    <section class="two" style="margin-top:16px">
+      <div class="card"><h2>Tendencia diaria de cumplimiento (%)</h2><canvas id="trend" height="130"></canvas></div>
+      <div class="card"><h2>Ranking de sucursales</h2><div class="scroll" style="max-height:340px"><table id="rank" class="rank"></table></div></div>
+    </section>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
