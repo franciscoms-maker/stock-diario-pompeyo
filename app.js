@@ -83,6 +83,8 @@ function fillSuc(sel) {
 }
 
 // ---------- Render ----------
+// Estados: ok = enviado a tiempo · late = enviado tarde (fuera de horario) · no = no enviado
+const st = r => { const e = r.estado.toLowerCase(); return /tarde|fuera/.test(e) ? "late" : e.startsWith("no") ? "no" : "ok"; };
 const pct = (ok, tot) => tot ? Math.round(ok / tot * 100) : null;
 const fmtPct = p => p === null ? "–" : p + "%";
 const ddmm = iso => iso.slice(8) + "-" + iso.slice(5, 7) + "-" + iso.slice(0, 4);
@@ -90,11 +92,11 @@ const ddmm = iso => iso.slice(8) + "-" + iso.slice(5, 7) + "-" + iso.slice(0, 4)
 function render() {
   const mes = $("fMes").value, g = $("fGrupo").value, s = $("fSuc").value;
   const rows = DATA.filter(r => r.fecha.startsWith(mes) && (!g || r.grupo === g) && (!s || r.sucursal === s));
-  const ok = r => r.estado.toLowerCase() === "enviado";
+  const ok = r => st(r) === "ok";
 
   // KPIs
-  const tot = (rs) => ({ ok: rs.filter(ok).length, n: rs.length });
-  const kp = (t, label) => `<div class="card kpi"><span>${label}</span><b>${fmtPct(pct(t.ok, t.n))}</b><span>${t.ok} de ${t.n} registros</span><div class="bar"><i style="width:${pct(t.ok, t.n) || 0}%"></i></div></div>`;
+  const tot = (rs) => ({ ok: rs.filter(ok).length, late: rs.filter(r => st(r) === "late").length, n: rs.length });
+  const kp = (t, label) => `<div class="card kpi"><span>${label}</span><b>${fmtPct(pct(t.ok, t.n))}</b><span>${t.ok} de ${t.n} a tiempo · <span class="lt">${t.late} tarde</span></span><div class="bar"><i style="width:${pct(t.ok, t.n) || 0}%"></i></div></div>`;
   $("kpis").innerHTML = kp(tot(rows), "Cumplimiento total") +
     GRUPOS.filter(x => !g || x === g).map(x => kp(tot(rows.filter(r => r.grupo === x)), "Grupo " + x)).join("");
 
@@ -105,18 +107,21 @@ function render() {
     .sort((a, b) => GRUPOS.indexOf(a.grupo) - GRUPOS.indexOf(b.grupo) || a.sucursal.localeCompare(b.sucursal));
   let h = "<thead><tr><th>Sucursal</th>";
   for (let d = 1; d <= dias; d++) h += `<th title="${ddmm(`${mes}-${String(d).padStart(2, "0")}`)}">${d}</th>`;
-  h += "<th>%</th></tr></thead><tbody>";
+  h += "<th title='% enviado a tiempo'>%</th><th title='Días enviados tarde'>⏱</th></tr></thead><tbody>";
   let cur = "";
   sucs.forEach(sc => {
-    if (sc.grupo !== cur) { cur = sc.grupo; h += `<tr class="g"><td colspan="${dias + 2}">${cur}</td></tr>`; }
-    h += `<tr><td>${sc.sucursal}</td>`; let o = 0, n = 0;
+    if (sc.grupo !== cur) { cur = sc.grupo; h += `<tr class="g"><td colspan="${dias + 3}">${cur}</td></tr>`; }
+    h += `<tr><td>${sc.sucursal}</td>`; let o = 0, n = 0, l = 0;
     for (let d = 1; d <= dias; d++) {
       const r = map.get(`${sc.grupo}|${sc.sucursal}|${d}`);
       const we = [0, 6].includes(new Date(y, m - 1, d).getDay()) ? " we" : "";
       if (!r) h += `<td class="c${we}"></td>`;
-      else { n++; if (ok(r)) { o++; h += `<td class="c y${we}" title="Enviado">✓</td>`; } else h += `<td class="c n${we}" title="No enviado">✗</td>`; }
+      else { n++; const e = st(r);
+        if (e === "ok") { o++; h += `<td class="c y${we}" title="Enviado a tiempo">✓</td>`; }
+        else if (e === "late") { l++; h += `<td class="c l${we}" title="Enviado fuera de horario">⏱</td>`; }
+        else h += `<td class="c n${we}" title="No enviado">✗</td>`; }
     }
-    h += `<td class="pct">${fmtPct(pct(o, n))}</td></tr>`;
+    h += `<td class="pct">${fmtPct(pct(o, n))}</td><td class="lt">${l || ""}</td></tr>`;
   });
   $("matrix").innerHTML = sucs.length ? h + "</tbody>" : "<tbody><tr><td>Sin datos para el filtro.</td></tr></tbody>";
 
@@ -134,10 +139,10 @@ function render() {
   });
 
   // Ranking
-  const rk = sucs.map(sc => { const rs = rows.filter(r => r.grupo === sc.grupo && r.sucursal === sc.sucursal); const t = tot(rs); return { ...sc, p: pct(t.ok, t.n), ok: t.ok, n: t.n }; })
+  const rk = sucs.map(sc => { const rs = rows.filter(r => r.grupo === sc.grupo && r.sucursal === sc.sucursal); const t = tot(rs); return { ...sc, p: pct(t.ok, t.n), ok: t.ok, n: t.n, late: t.late }; })
     .sort((a, b) => (b.p ?? -1) - (a.p ?? -1));
   $("rank").innerHTML = "<thead><tr><th>#</th><th>Sucursal</th><th>Grupo</th><th>%</th></tr></thead><tbody>" +
-    rk.map((r, i) => `<tr><td>${i + 1}</td><td>${r.sucursal}</td><td>${r.grupo}</td><td class="pct">${fmtPct(r.p)} <span class="sub">(${r.ok}/${r.n})</span></td></tr>`).join("") + "</tbody>";
+    rk.map((r, i) => `<tr><td>${i + 1}</td><td>${r.sucursal}</td><td>${r.grupo}</td><td class="pct">${fmtPct(r.p)} <span class="sub">(${r.ok}/${r.n}${r.late ? " · " + r.late + " tarde" : ""})</span></td></tr>`).join("") + "</tbody>";
 }
 
 // ---------- Init ----------
