@@ -59,6 +59,7 @@ async function load() {
     }
     DATA = dedupe(C.SOURCE === "graph" ? await loadGraph() : await loadJson());
     $("upd").textContent = "Actualizado " + new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" });
+    if (!DATA.length) { $("app").hidden = true; $("msg").hidden = false; $("msg").textContent = "Aún no hay registros de stock."; return; }
     $("msg").hidden = true; $("app").hidden = false;
     setupFilters(); render();
   } catch (e) { $("msg").hidden = false; $("msg").className = "err"; $("msg").textContent = "Error: " + e.message; }
