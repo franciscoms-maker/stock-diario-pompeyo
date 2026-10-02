@@ -28,3 +28,14 @@ td:first-child,th:first-child{position:sticky;left:0;background:var(--card);text
 #msg{padding:30px;text-align:center;color:var(--mut)}
 .err{color:var(--no)}
 .l{background:var(--ltbg);color:var(--lt);font-weight:700}.lt{color:var(--lt);font-weight:600}
+.z{background:var(--bd);color:var(--mut)}
+.prov{background-image:repeating-linear-gradient(45deg,transparent 0 4px,#ffffff55 4px 8px);outline:1px dashed var(--no)}
+.chk{display:flex;flex-direction:row!important;align-items:flex-end;gap:6px!important}
+.hoy{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.hoyl{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.hoyl li{display:flex;gap:8px;align-items:center;padding:3px 8px;border-radius:6px;font-size:12px}
+.hoyl li span{width:14px;font-weight:700}.hoyl li em{margin-left:auto;font-style:normal;font-size:11px}
+a.pt{color:inherit;text-decoration:none}a.pt:hover{text-decoration:underline}
+th.we{opacity:.5}
+dialog{border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);min-width:min(420px,92vw)}
+.kpi>span{display:block}
