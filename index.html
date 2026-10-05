@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stock diario por sucursal · Grupo Pompeyo</title>
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 <header>
@@ -21,19 +21,21 @@
       <label>Punto<select id="fSuc"></select></label>
     </section>
     <section class="kpis" id="kpis" style="margin-top:16px"></section>
-    <section class="card" style="margin-top:16px">
+    <div class="side">
+    <section class="card">
       <h2>Matriz sucursal × día <span class="sub">✓ a tiempo · ⏱ tarde · ✗ no llegó · – sin dato (clic en un punto para ver su historial)</span></h2>
       <p class="sub" style="margin:0 0 8px">Desde el <b>05-10-2026</b> el plazo de envío es hasta las <b>14:00</b> (antes 12:00): "A tiempo" cambió de criterio. Los días anteriores conservan la regla de las 12:00 y se ven separados por una línea azul.</p>
       <div class="scroll"><table id="matrix"></table></div>
     </section>
-    <section style="margin-top:16px">
-      <div class="card"><h2>Ranking de sucursales</h2><div class="scroll" style="max-height:340px"><table id="rank" class="rank"></table></div></div>
+    <section class="card rankc">
+      <h2>Ranking de sucursales</h2><div class="scroll" style="max-height:70vh"><table id="rank" class="rank"></table></div>
     </section>
+    </div>
   </div>
 </main>
 <dialog id="dlg"><h2 id="dT"></h2><div class="scroll" style="max-height:60vh"><table id="dB" class="rank"></table></div><p><button id="dClose" class="pri">Cerrar</button></p></dialog>
 <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
-<script src="config.js?v=6"></script>
-<script src="app.js?v=6"></script>
+<script src="config.js?v=9"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

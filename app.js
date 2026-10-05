@@ -178,8 +178,8 @@ function render() {
   const rk = GRUPOS.filter(x => !g || x === g).flatMap(grp => pointsOf(grp).filter(p => !s || p === s).map(p => {
     const t = tot(rows.filter(r => r.grupo === grp && r.sucursal === p)); return { grp, p, ...t, v: pct(t.ok, t.n) };
   })).filter(r => r.n).sort((a, b) => b.v - a.v || b.n - a.n);
-  $("rank").innerHTML = "<thead><tr><th>#</th><th>Punto</th><th>Grupo</th><th>% puntual</th></tr></thead><tbody>" +
-    rk.map((r, i) => `<tr><td>${i + 1}</td><td>${r.p}</td><td>${r.grp}</td><td class="pct">${fmtPct(r.v)} <span class="sub">(${r.ok}/${r.n}${r.late ? " · " + r.late + " tarde" : ""})</span></td></tr>`).join("") + "</tbody>";
+  $("rank").innerHTML = "<thead><tr><th>#</th><th>Punto</th><th>% puntual</th></tr></thead><tbody>" +
+    rk.map((r, i) => `<tr><td>${i + 1}</td><td>${r.p}<br><span class="sub">${r.grp}</span></td><td class="pct">${fmtPct(r.v)}<br><span class="sub">${r.ok}/${r.n}${r.late ? " · " + r.late + " tarde" : ""}</span></td></tr>`).join("") + "</tbody>";
 }
 
 // Vista "Hoy": por grupo, cada punto con estado y hora
