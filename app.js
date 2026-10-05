@@ -133,7 +133,6 @@ const CLS = { ok: "y", late: "l", no: "n" };
 const isProv = r => { const n = nowSt(); return st(r) === "no" && r.fecha === n.date && n.min >= CIERRE && n.min < BARRIDO; };
 
 function render() {
-  renderHoy();
   const mes = $("fMes").value, g = $("fGrupo").value, s = $("fSuc").value;
   const inScope = r => (!g || r.grupo === g) && (!s || r.sucursal === s);
   const monthRows = DATA.filter(r => r.fecha.startsWith(mes) && inScope(r));
@@ -180,29 +179,6 @@ function render() {
   })).filter(r => r.n).sort((a, b) => b.v - a.v || b.n - a.n);
   $("rank").innerHTML = "<thead><tr><th>#</th><th>Punto</th><th>% puntual</th></tr></thead><tbody>" +
     rk.map((r, i) => `<tr><td>${i + 1}</td><td>${r.p}<br><span class="sub">${r.grp}</span></td><td class="pct">${fmtPct(r.v)}<br><span class="sub">${r.ok}/${r.n}${r.late ? " · " + r.late + " tarde" : ""}</span></td></tr>`).join("") + "</tbody>";
-}
-
-// Vista "Hoy": por grupo, cada punto con estado y hora
-function renderHoy() {
-  const n = nowSt(), dates = [...new Set(DATA.map(r => r.fecha))].sort();
-  const hasToday = dates.includes(n.date), fecha = hasToday ? n.date : dates[dates.length - 1];
-  const rows = DATA.filter(r => r.fecha === fecha);
-  const last = rows.reduce((a, r) => r.reg > a ? r.reg : a, "");
-  const title = hasToday ? "Hoy · " + ddmm(fecha) : "Último día con datos · " + ddmm(fecha);
-  const note = hasToday ? (n.min < BARRIDO ? "Los \"No llegó\" de hoy aún pueden cambiar a \"Tarde\" hasta las 18:00 (barrido de rezagados)." : "Dato final.") : (n.min < CIERRE ? "Hoy: sin datos aún (el cierre es a las 14:00)." : "Hoy aún no tiene registros.");
-  $("hoyT").innerHTML = `${title} <span class="sub">${note}${last ? " Actualizado: " + last.slice(11) : ""}</span>`;
-  $("hoy").innerHTML = GRUPOS.map(grp => {
-    const gr = rows.filter(r => r.grupo === grp), cnt = { ok: 0, late: 0, no: 0 };
-    gr.forEach(r => cnt[st(r)]++);
-    if (!gr.length) return `<div class="card"><h2>${grp}</h2><div class="sub">Sin dato</div></div>`;
-    const lis = pointsOf(grp).map(p => {
-      const r = gr.find(x => x.sucursal === p);
-      if (!r) return `<li class="z"><span>–</span>${p}<em>sin dato</em></li>`;
-      const e = st(r), prov = isProv(r);
-      return `<li class="${CLS[e]}${prov ? " prov" : ""}"><span>${ICON[e]}</span>${p}<em>${r.hora ? r.hora + (e === "late" ? " · tarde" : "") : prov ? "podría llegar" : LABEL[e]}</em></li>`;
-    }).join("");
-    return `<div class="card"><h2>${grp} <span class="sub">${cnt.ok} a tiempo · ${cnt.late} tarde · ${cnt.no} no llegó</span></h2><ul class="hoyl">${lis}</ul></div>`;
-  }).join("");
 }
 
 // Detalle de un punto
