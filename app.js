@@ -9,7 +9,7 @@ const CANON = {
 };
 const CIERRE = 14 * 60, BARRIDO = 18 * 60; // minutos del día (Santiago). Plazo y cierre: 14:00 desde 05-10-2026 (antes 12:00)
 const CAMBIO_REGLA = "2026-10-05"; // desde esta fecha "A tiempo" = hasta las 14:00 (antes 12:00)
-let DATA = [], chart = null, msal = null, tick = 0;
+let DATA = [], msal = null, tick = 0;
 
 // ---------- Utilidades ----------
 const normName = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
@@ -173,21 +173,6 @@ function render() {
     });
   });
   $("matrix").innerHTML = any ? h + "</tbody>" : "<tbody><tr><td>Sin datos para el filtro.</td></tr></tbody>";
-
-  // Tendencia (puntual y total)
-  const labels = [], vOk = [], vTot = [];
-  for (let d = 1; d <= dias; d++) {
-    const rs = rows.filter(r => +r.fecha.slice(8) === d), t = tot(rs);
-    if (rs.length) { labels.push(`${pad(d)}-${pad(m)}`); vOk.push(pct(t.ok, t.n)); vTot.push(pct(t.ok + t.late, t.n)); }
-  }
-  if (chart) chart.destroy();
-  chart = new Chart($("trend"), {
-    type: "line",
-    data: { labels, datasets: [
-      { label: "Puntual", data: vOk, borderColor: "#1a7f4b", tension: .25, pointRadius: 3 },
-      { label: "Total (incluye tarde)", data: vTot, borderColor: "#c98a00", borderDash: [5, 4], tension: .25, pointRadius: 2 }] },
-    options: { scales: { y: { min: 0, max: 100, ticks: { callback: v => v + "%" } } }, plugins: { legend: { position: "bottom" } } }
-  });
 
   // Ranking por cumplimiento puntual
   const rk = GRUPOS.filter(x => !g || x === g).flatMap(grp => pointsOf(grp).filter(p => !s || p === s).map(p => {
