@@ -130,15 +130,14 @@ function fillSuc(sel) {
 // ---------- Render ----------
 const ICON = { ok: "✓", late: "⏱", no: "✗" }, LABEL = { ok: "A tiempo", late: "Tarde", no: "No llegó" };
 const CLS = { ok: "y", late: "l", no: "n" };
-const isWE = iso => { const d = new Date(iso + "T12:00:00Z").getUTCDay(); return d === 0 || d === 6; };
 const isProv = r => { const n = nowSt(); return st(r) === "no" && r.fecha === n.date && n.min >= CIERRE && n.min < BARRIDO; };
 
 function render() {
   renderHoy();
-  const mes = $("fMes").value, g = $("fGrupo").value, s = $("fSuc").value, we = $("fWE").checked;
+  const mes = $("fMes").value, g = $("fGrupo").value, s = $("fSuc").value;
   const inScope = r => (!g || r.grupo === g) && (!s || r.sucursal === s);
   const monthRows = DATA.filter(r => r.fecha.startsWith(mes) && inScope(r));
-  const rows = monthRows.filter(r => we || !isWE(r.fecha)); // base de los indicadores
+  const rows = monthRows; // todos los días cuentan (también fines de semana)
 
   // Indicadores
   const tot = rs => ({ n: rs.length, ok: rs.filter(r => st(r) === "ok").length, late: rs.filter(r => st(r) === "late").length });
@@ -149,7 +148,7 @@ function render() {
   const [y, m] = mes.split("-").map(Number), dias = new Date(y, m, 0).getDate(), hoy = nowSt().date;
   const map = new Map(monthRows.map(r => [`${r.grupo}|${r.sucursal}|${+r.fecha.slice(8)}`, r]));
   let h = "<thead><tr><th>Punto</th>";
-  for (let d = 1; d <= dias; d++) h += `<th class="${isWE(`${mes}-${pad(d)}`) ? "we" : ""}${`${mes}-${pad(d)}` === CAMBIO_REGLA ? " brk" : ""}" title="${ddmm(`${mes}-${pad(d)}`)}">${d}</th>`;
+  for (let d = 1; d <= dias; d++) h += `<th class="${`${mes}-${pad(d)}` === CAMBIO_REGLA ? "brk" : ""}" title="${ddmm(`${mes}-${pad(d)}`)}">${d}</th>`;
   h += "<th title='% puntual'>%</th><th title='Días tarde'>⏱</th></tr></thead><tbody>";
   let any = false;
   GRUPOS.filter(x => !g || x === g).forEach(grp => {
@@ -160,13 +159,13 @@ function render() {
       any = true; h += `<tr><td><a href="#" class="pt" data-g="${grp}" data-p="${p}">${p}</a></td>`;
       let o = 0, n = 0, l = 0;
       for (let d = 1; d <= dias; d++) {
-        const iso = `${mes}-${pad(d)}`, r = map.get(`${grp}|${p}|${d}`), cw = (isWE(iso) ? " we" : "") + (iso === CAMBIO_REGLA ? " brk" : "");
+        const iso = `${mes}-${pad(d)}`, r = map.get(`${grp}|${p}|${d}`), cw = iso === CAMBIO_REGLA ? " brk" : "";
         if (!r) {
           const t = iso > hoy ? "Sin datos aún" : iso === hoy ? "Sin datos aún (cierre 14:00)" : "Sin dato (falló el cierre)";
           h += `<td class="c z${cw}" title="${t}">–</td>`; continue;
         }
         const e = st(r), prov = isProv(r);
-        if (we || !isWE(iso)) { n++; if (e === "ok") o++; if (e === "late") l++; }
+        n++; if (e === "ok") o++; if (e === "late") l++;
         const t = LABEL[e] + (r.hora ? " · " + r.hora : "") + (prov ? " · podría llegar hasta las 18:00" : "");
         h += `<td class="c ${CLS[e]}${prov ? " prov" : ""}${cw}" title="${t}">${ICON[e]}</td>`;
       }
@@ -232,7 +231,7 @@ function detalle(grp, p) {
 
 // ---------- Init ----------
 $("fGrupo").onchange = () => { fillSuc(); render(); };
-$("fMes").onchange = $("fSuc").onchange = $("fWE").onchange = render;
+$("fMes").onchange = $("fSuc").onchange = render;
 $("refresh").onclick = load;
 $("login").onclick = async () => { await msal.loginPopup({ scopes: ["Files.Read.All"] }); load(); };
 $("matrix").onclick = e => { const a = e.target.closest("a.pt"); if (a) { e.preventDefault(); detalle(a.dataset.g, a.dataset.p); } };
