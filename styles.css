@@ -39,3 +39,4 @@ a.pt{color:inherit;text-decoration:none}a.pt:hover{text-decoration:underline}
 th.we{opacity:.5}
 dialog{border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);min-width:min(420px,92vw)}
 .kpi>span{display:block}
+.brk{border-left:2px solid var(--ac)}

@@ -7,7 +7,8 @@ const CANON = {
   SDA: ["SUBARU Plaza Oeste","SUBARU Plaza Tobalaba","SUBARU Plaza Sur","SUBARU Plaza Vespucio","DFSK Plaza Oeste","DFSK Tobalaba","DFSK Gran Avenida","DFSK Plaza Sur","DFSK Arauco Maipu","DFSK Melipilla","SUZUKI Bavaro","GWM Bavaro"],
   ADP: ["ADP Plaza Oeste","ADP Plaza Tobalaba","LANDKING Gran Avenida","ADP Maipú"]
 };
-const CIERRE = 12 * 60, BARRIDO = 18 * 60; // minutos del día (Santiago)
+const CIERRE = 14 * 60, BARRIDO = 18 * 60; // minutos del día (Santiago). Plazo y cierre: 14:00 desde 05-10-2026 (antes 12:00)
+const CAMBIO_REGLA = "2026-10-05"; // desde esta fecha "A tiempo" = hasta las 14:00 (antes 12:00)
 let DATA = [], chart = null, msal = null, tick = 0;
 
 // ---------- Utilidades ----------
@@ -148,7 +149,7 @@ function render() {
   const [y, m] = mes.split("-").map(Number), dias = new Date(y, m, 0).getDate(), hoy = nowSt().date;
   const map = new Map(monthRows.map(r => [`${r.grupo}|${r.sucursal}|${+r.fecha.slice(8)}`, r]));
   let h = "<thead><tr><th>Punto</th>";
-  for (let d = 1; d <= dias; d++) h += `<th class="${isWE(`${mes}-${pad(d)}`) ? "we" : ""}" title="${ddmm(`${mes}-${pad(d)}`)}">${d}</th>`;
+  for (let d = 1; d <= dias; d++) h += `<th class="${isWE(`${mes}-${pad(d)}`) ? "we" : ""}${`${mes}-${pad(d)}` === CAMBIO_REGLA ? " brk" : ""}" title="${ddmm(`${mes}-${pad(d)}`)}">${d}</th>`;
   h += "<th title='% puntual'>%</th><th title='Días tarde'>⏱</th></tr></thead><tbody>";
   let any = false;
   GRUPOS.filter(x => !g || x === g).forEach(grp => {
@@ -159,9 +160,9 @@ function render() {
       any = true; h += `<tr><td><a href="#" class="pt" data-g="${grp}" data-p="${p}">${p}</a></td>`;
       let o = 0, n = 0, l = 0;
       for (let d = 1; d <= dias; d++) {
-        const iso = `${mes}-${pad(d)}`, r = map.get(`${grp}|${p}|${d}`), cw = isWE(iso) ? " we" : "";
+        const iso = `${mes}-${pad(d)}`, r = map.get(`${grp}|${p}|${d}`), cw = (isWE(iso) ? " we" : "") + (iso === CAMBIO_REGLA ? " brk" : "");
         if (!r) {
-          const t = iso > hoy ? "Sin datos aún" : iso === hoy ? "Sin datos aún (cierre 12:00)" : "Sin dato (falló el cierre)";
+          const t = iso > hoy ? "Sin datos aún" : iso === hoy ? "Sin datos aún (cierre 14:00)" : "Sin dato (falló el cierre)";
           h += `<td class="c z${cw}" title="${t}">–</td>`; continue;
         }
         const e = st(r), prov = isProv(r);
@@ -204,7 +205,7 @@ function renderHoy() {
   const rows = DATA.filter(r => r.fecha === fecha);
   const last = rows.reduce((a, r) => r.reg > a ? r.reg : a, "");
   const title = hasToday ? "Hoy · " + ddmm(fecha) : "Último día con datos · " + ddmm(fecha);
-  const note = hasToday ? (n.min < BARRIDO ? "Los \"No llegó\" de hoy aún pueden cambiar a \"Tarde\" hasta las 18:00 (barrido de rezagados)." : "Dato final.") : (n.min < CIERRE ? "Hoy: sin datos aún (el cierre es a las 12:00)." : "Hoy aún no tiene registros.");
+  const note = hasToday ? (n.min < BARRIDO ? "Los \"No llegó\" de hoy aún pueden cambiar a \"Tarde\" hasta las 18:00 (barrido de rezagados)." : "Dato final.") : (n.min < CIERRE ? "Hoy: sin datos aún (el cierre es a las 14:00)." : "Hoy aún no tiene registros.");
   $("hoyT").innerHTML = `${title} <span class="sub">${note}${last ? " Actualizado: " + last.slice(11) : ""}</span>`;
   $("hoy").innerHTML = GRUPOS.map(grp => {
     const gr = rows.filter(r => r.grupo === grp), cnt = { ok: 0, late: 0, no: 0 };
@@ -246,6 +247,6 @@ $("dClose").onclick = () => $("dlg").close();
     await msal.initialize();
   }
   load();
-  // cada 5 min entre 12:00 y 18:30 (Santiago); fuera de ese rango, cada 30 min
+  // cada 5 min entre 14:00 y 18:30 (Santiago); fuera de ese rango, cada 30 min
   setInterval(() => { const m = nowSt().min; if ((m >= CIERRE && m <= BARRIDO + 30) || ++tick % 6 === 0) load(); }, 5 * 60000);
 })();
