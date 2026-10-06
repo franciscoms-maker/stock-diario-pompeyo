@@ -41,3 +41,10 @@ dialog{border:1px solid var(--bd);border-radius:10px;background:var(--card);colo
 @media(max-width:1100px){.side{grid-template-columns:1fr}.rankc{position:static}}
 #rank td,#rank th{white-space:normal;vertical-align:top;padding:5px 6px}#rank td:nth-child(2){min-width:0}
 #rank{width:100%}#rank td:first-child,#rank th:first-child{width:24px;padding-right:2px}#rank td:last-child{white-space:nowrap}
+/* Sin marcos: contenido directo sobre el fondo */
+body{background:var(--card)}
+.card{background:transparent;border:0;border-radius:0;padding:0}
+header{border-bottom:1px solid var(--bd)}
+.kpi{padding:0 8px 0 0}
+thead th,td:first-child,th:first-child{background:var(--card)}
+.g td:first-child{background:var(--bg)}
