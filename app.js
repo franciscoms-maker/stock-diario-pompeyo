@@ -68,7 +68,7 @@ function dedupe(rows) { // una fila por (fecha, grupo, punto): prefiere Enviado,
 
 // ---------- Carga ----------
 async function loadJson() {
-  const r = await fetch(C.JSON_URL + "?t=" + Date.now());
+  const r = await fetch(C.JSON_URL + "?t=" + Date.now(), { cache: "no-store" });
   if (!r.ok) throw new Error("No se pudo leer " + C.JSON_URL);
   return r.json();
 }
@@ -90,19 +90,38 @@ async function loadGraph() {
   }
   return out;
 }
-async function load() {
+const firma = rows => new Map(rows.map(r => [`${r.fecha}|${r.grupo}|${r.key}`, `${st(r)}|${r.hora}|${r.reg}`]));
+// Qué esperar según nuestras reglas: cierre 14:00 (se publica 14:10), barrido 18:00 (se publica 18:10)
+function estadoReglas() {
+  const n = nowSt(), hoy = DATA.filter(r => r.fecha === n.date), m = n.min, T = x => `${pad(x / 60 | 0)}:${pad(x % 60)}`;
+  if (m < CIERRE) return `Hoy el plazo de envío es hasta las ${T(CIERRE)}; los datos del día se publican a las 14:10.`;
+  if (!hoy.length) return m < CIERRE + 10 ? "Cierre de las 14:00 en curso: los datos se publican a las 14:10." : "Aún no hay registros de hoy publicados. Marco ya debería haber cerrado: reintenta en unos minutos.";
+  if (m < BARRIDO) return "Datos del cierre de las 14:00. Los \"No llegó\" de hoy aún pueden cambiar a \"Tarde\" hasta el barrido de las 18:00 (se publica a las 18:10).";
+  if (m < BARRIDO + 10) return "Barrido de las 18:00 en curso: el dato final de hoy se publica a las 18:10.";
+  return "Dato de hoy final (barrido de las 18:00 incorporado).";
+}
+async function load(manual) {
+  const btn = $("refresh");
   try {
+    btn.disabled = true; if (manual) btn.textContent = "Actualizando…";
     if (C.SOURCE === "graph") {
       if (!msal.getAllAccounts().length) { $("login").hidden = false; show("Inicia sesión con tu cuenta Pompeyo para ver el dashboard."); return; }
       $("login").hidden = true; $("user").textContent = msal.getAllAccounts()[0].username;
     }
+    const antes = firma(DATA);
     DATA = dedupe(C.SOURCE === "graph" ? await loadGraph() : await loadJson());
     if (!DATA.length) { $("app").hidden = true; show("Aún no hay registros de stock."); return; }
+    const despues = firma(DATA);
+    let cambios = 0; despues.forEach((v, k) => { if (antes.get(k) !== v) cambios++; });
     const last = DATA.reduce((a, r) => r.reg > a ? r.reg : a, "");
-    $("upd").textContent = "Última actualización de Marco: " + (last ? ddmm(last) + last.slice(10) : "–") + " · página cargada " + new Date().toLocaleTimeString("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" });
+    const hora = new Date().toLocaleTimeString("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" });
+    let res = "";
+    if (manual) res = antes.size ? (cambios ? ` · ${cambios} registro${cambios > 1 ? "s" : ""} nuevo${cambios > 1 ? "s" : ""} o cambiado${cambios > 1 ? "s" : ""}` : " · sin cambios desde la última publicación") : "";
+    $("upd").innerHTML = `Última actualización de Marco: ${last ? ddmm(last) + last.slice(10) : "–"} · revisado ${hora}${res}<br>${estadoReglas()}`;
     $("msg").hidden = true; $("app").hidden = false;
     setupFilters(); render();
   } catch (e) { $("app").hidden = true; show("Error: " + e.message, true); }
+  finally { btn.disabled = false; btn.textContent = "Actualizar"; }
 }
 function show(t, err) { $("msg").hidden = false; $("msg").className = err ? "err" : ""; $("msg").textContent = t; }
 
@@ -193,7 +212,7 @@ function detalle(grp, p) {
 // ---------- Init ----------
 $("fGrupo").onchange = () => { fillSuc(); render(); };
 $("fMes").onchange = $("fSuc").onchange = render;
-$("refresh").onclick = load;
+$("refresh").onclick = () => load(true);
 $("login").onclick = async () => { await msal.loginPopup({ scopes: ["Files.Read.All"] }); load(); };
 $("matrix").onclick = e => { const a = e.target.closest("a.pt"); if (a) { e.preventDefault(); detalle(a.dataset.g, a.dataset.p); } };
 $("dClose").onclick = () => $("dlg").close();
