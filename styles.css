@@ -14,7 +14,7 @@ button{cursor:pointer}button.pri{background:var(--ac);color:#fff;border-color:va
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .kpi b{display:block;font-size:26px}.kpi span{color:var(--mut);font-size:12px}
 .bar{height:6px;background:var(--bd);border-radius:3px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
-.scroll{overflow:auto;max-height:70vh}
+.scroll{overflow-x:auto}
 table{border-collapse:separate;border-spacing:0;font-size:12px}
 th,td{padding:4px 6px;text-align:center;border-bottom:1px solid var(--bd);white-space:nowrap}
 thead th{position:sticky;top:0;background:var(--card);z-index:2}
@@ -36,8 +36,8 @@ th.we{opacity:.5}
 dialog{border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);min-width:min(420px,92vw)}
 .kpi>span{display:block}
 .brk{border-left:2px solid var(--ac)}
-.side{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px;margin-top:16px;align-items:start}
-.rankc{position:sticky;top:8px}
+.side{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;margin-top:16px;align-items:start}
+.rankc{position:static}
 @media(max-width:1100px){.side{grid-template-columns:1fr}.rankc{position:static}}
 #rank td,#rank th{white-space:normal;vertical-align:top;padding:5px 6px}#rank td:nth-child(2){min-width:0}
 #rank{width:100%}#rank td:first-child,#rank th:first-child{width:24px;padding-right:2px}#rank td:last-child{white-space:nowrap}
@@ -48,3 +48,7 @@ header{border-bottom:1px solid var(--bd)}
 .kpi{padding:0 8px 0 0}
 thead th,td:first-child,th:first-child{background:var(--card)}
 .g td:first-child{background:var(--bg)}
+thead th{position:static}
+#rank td:nth-child(2){white-space:nowrap}#rank td,#rank th{padding:3px 6px;vertical-align:middle}
+#rank td:first-child,#rank th:first-child{width:1%;white-space:nowrap}#rank td:last-child,#rank th:last-child{width:1%;white-space:nowrap;text-align:right}
+#matrix th,#matrix td{padding:4px 2px}#matrix .c{width:20px;min-width:20px}#matrix td:first-child,#matrix th:first-child{min-width:150px;padding-left:6px}#matrix td.pct,#matrix th:nth-last-child(2){padding:4px 6px}
