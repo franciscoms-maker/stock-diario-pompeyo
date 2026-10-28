@@ -135,6 +135,11 @@ function setupFilters() {
   if (keep.g) $("fGrupo").value = keep.g;
   if (keep.m && meses.includes(keep.m)) $("fMes").value = keep.m;
   fillSuc(keep.s);
+  renderSeg();
+}
+function renderSeg() {
+  const v = $("fGrupo").value;
+  $("seg").innerHTML = [["", "Todos"], ...GRUPOS.map(g => [g, g])].map(([k, t]) => `<button type="button" data-g="${k}" aria-pressed="${k === v}">${t}</button>`).join("");
 }
 function pointsOf(g) { // canónicos + cualquier nombre extra que aparezca en los datos
   const extra = [...new Set(DATA.filter(r => r.grupo === g).map(r => r.sucursal))].filter(n => !CANON[g].includes(n));
@@ -197,7 +202,7 @@ function render() {
     const t = tot(rows.filter(r => r.grupo === grp && r.sucursal === p)); return { grp, p, ...t, v: pct(t.ok, t.n) };
   })).filter(r => r.n).sort((a, b) => b.v - a.v || b.n - a.n);
   $("rank").innerHTML = "<thead><tr><th>#</th><th>Punto</th><th>% puntual</th></tr></thead><tbody>" +
-    rk.map((r, i) => `<tr title="${r.ok} a tiempo de ${r.n}${r.late ? " · " + r.late + " tarde" : ""}"><td>${i + 1}</td><td>${r.p} <span class="sub">${r.grp}</span></td><td class="pct">${fmtPct(r.v)}</td></tr>`).join("") + "</tbody>";
+    rk.map((r, i) => `<tr title="${r.ok} a tiempo de ${r.n}${r.late ? " · " + r.late + " tarde" : ""}"><td>${i + 1}</td><td>${r.p} <span class="sub">${r.grp}</span></td><td><span class="rv"><span class="mini"><i style="width:${r.v}%"></i></span><b>${fmtPct(r.v)}</b></span></td></tr>`).join("") + "</tbody>";
 }
 
 // Detalle de un punto
@@ -210,7 +215,8 @@ function detalle(grp, p) {
 }
 
 // ---------- Init ----------
-$("fGrupo").onchange = () => { fillSuc(); render(); };
+$("fGrupo").onchange = () => { fillSuc(); renderSeg(); render(); };
+$("seg").onclick = e => { const b = e.target.closest("button[data-g]"); if (b) { $("fGrupo").value = b.dataset.g; $("fGrupo").onchange(); } };
 $("fMes").onchange = $("fSuc").onchange = render;
 $("refresh").onclick = () => load(true);
 $("login").onclick = async () => { await msal.loginPopup({ scopes: ["Files.Read.All"] }); load(); };

@@ -3,38 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Stock diario por sucursal · Grupo Pompeyo</title>
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body>
-<header>
-  <div><h1>Llegada diaria de stock por sucursal</h1><div class="sub" id="upd">Cargando…</div></div>
-  <div><span class="sub" id="user"></span> <button id="login" class="pri" hidden>Iniciar sesión</button> <button id="refresh">Actualizar</button></div>
+<header class="top">
+  <div>
+    <h1>Llegada diaria de stock por sucursal</h1>
+    <p class="sub" id="upd">Cargando…</p>
+  </div>
+  <div class="actions">
+    <span class="sub" id="user"></span>
+    <button id="login" class="pri" hidden>Iniciar sesión</button>
+    <button id="refresh" class="btn">Actualizar</button>
+  </div>
 </header>
 <main>
   <div id="msg">Cargando datos…</div>
   <div id="app" hidden>
-    <section class="card filters">
-      <label>Grupo<select id="fGrupo"></select></label>
-      <label>Mes<select id="fMes"></select></label>
-      <label>Punto<select id="fSuc"></select></label>
+    <section class="filters" aria-label="Filtros">
+      <div class="field">Grupo<div class="seg" id="seg" role="group" aria-label="Grupo"></div></div>
+      <select id="fGrupo" hidden></select>
+      <label class="field">Mes<select id="fMes"></select></label>
+      <label class="field">Punto<select id="fSuc"></select></label>
     </section>
-    <section class="kpis" id="kpis" style="margin-top:16px"></section>
+    <section class="kpis" id="kpis" aria-label="Indicadores"></section>
     <div class="side">
-    <section class="card">
-      <h2>Matriz sucursal × día <span class="sub">✓ a tiempo · ⏱ tarde · ✗ no llegó · – sin dato (clic en un punto para ver su historial)</span></h2>
-      <p class="sub" style="margin:0 0 8px">Desde el <b>05-10-2026</b> el plazo de envío es hasta las <b>14:00</b> (antes 12:00): "A tiempo" cambió de criterio. Los días anteriores conservan la regla de las 12:00 y se ven separados por una línea azul.</p>
-      <div class="scroll"><table id="matrix"></table></div>
-    </section>
-    <section class="card rankc">
-      <h2>Ranking de sucursales</h2><div class="scroll"><table id="rank" class="rank"></table></div>
-    </section>
+      <section>
+        <div class="head">
+          <h2>Matriz sucursal × día</h2>
+          <div class="legend" aria-label="Leyenda">
+            <span class="chip y">✓ A tiempo</span><span class="chip l">⏱ Tarde</span><span class="chip n">✗ No llegó</span><span class="chip z">– Sin dato</span>
+          </div>
+        </div>
+        <p class="note">Desde el <b>05-10-2026</b> el plazo de envío es hasta las <b>14:00</b> (antes 12:00): «A tiempo» cambió de criterio. Los días anteriores conservan la regla de las 12:00 y se ven separados por una línea azul. Toca un punto para ver su historial.</p>
+        <div class="scroll"><table id="matrix"></table></div>
+      </section>
+      <section>
+        <div class="head"><h2>Ranking</h2></div>
+        <div class="scroll"><table id="rank"></table></div>
+      </section>
     </div>
   </div>
 </main>
-<dialog id="dlg"><h2 id="dT"></h2><div class="scroll" style="max-height:60vh"><table id="dB" class="rank"></table></div><p><button id="dClose" class="pri">Cerrar</button></p></dialog>
+<dialog id="dlg" aria-labelledby="dT"><h2 id="dT"></h2><div class="scroll" style="max-height:60vh"><table id="dB"></table></div><p><button id="dClose" class="pri">Cerrar</button></p></dialog>
 <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
-<script src="config.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="config.js?v=19"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>
