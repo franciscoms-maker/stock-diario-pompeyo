@@ -119,3 +119,4 @@ dialog h2{margin-bottom:12px}
 main,#app,#app>*,.side>*{min-width:0}
 @media(max-width:600px){.kpis{grid-template-columns:minmax(0,1fr)}.seg button{padding:0 14px}}
 #matrix th{vertical-align:bottom}.dow{display:block;min-height:13px;font-size:10px;line-height:13px;font-weight:700;color:var(--acc)}
+#matrix .g th{padding-top:18px;vertical-align:bottom}#matrix .g th:first-child{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--lab)}

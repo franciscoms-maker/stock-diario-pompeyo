@@ -14,6 +14,8 @@ let DATA = [], msal = null, tick = 0;
 // ---------- Utilidades ----------
 const normName = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 const CANON_MAP = new Map(GRUPOS.flatMap(g => CANON[g].map(n => [g + "|" + normName(n), n])));
+// Nombres alternativos que aparecen en el Excel → nombre canónico (normalizados)
+const ALIAS = { "SDA|subaru tobalaba": "subaru plaza tobalaba" };
 const pad = n => String(n).padStart(2, "0");
 const ddmm = iso => iso.slice(8, 10) + "-" + iso.slice(5, 7) + "-" + iso.slice(0, 4);
 const pct = (a, n) => n ? Math.round(a / n * 100) : null;
@@ -39,7 +41,7 @@ const toReg = v => typeof v === "number" ? serialToIso(v).slice(0, 16).replace("
 
 // ---------- Normalización y deduplicado ----------
 function norm(r) {
-  const grupo = String(r.grupo).trim().toUpperCase(), nn = normName(r.sucursal);
+  const grupo = String(r.grupo).trim().toUpperCase(), n0 = normName(r.sucursal), nn = ALIAS[grupo + "|" + n0] || n0;
   return {
     fecha: toDate(r.fecha), grupo, key: nn,
     sucursal: CANON_MAP.get(grupo + "|" + nn) || String(r.sucursal).trim().replace(/\s+/g, " "),
@@ -170,18 +172,20 @@ function render() {
   // Matriz punto × día
   const [y, m] = mes.split("-").map(Number), dias = new Date(y, m, 0).getDate(), hoy = nowSt().date;
   const map = new Map(monthRows.map(r => [`${r.grupo}|${r.sucursal}|${+r.fecha.slice(8)}`, r]));
-  let h = "<thead><tr><th>Punto</th>";
+  // Encabezado de días (con S/D en fines de semana), repetido en cada grupo de marcas
+  let diasHead = "";
   for (let d = 1; d <= dias; d++) {
     const iso = `${mes}-${pad(d)}`, dow = new Date(iso + "T12:00:00Z").getUTCDay(); // 0 = domingo, 6 = sábado
     const letra = dow === 6 ? "S" : dow === 0 ? "D" : "", nombre = dow === 6 ? "sábado " : dow === 0 ? "domingo " : "";
-    h += `<th class="${iso === CAMBIO_REGLA ? "brk" : ""}" title="${nombre}${ddmm(iso)}"><span class="dow">${letra}</span>${d}</th>`;
+    diasHead += `<th class="${iso === CAMBIO_REGLA ? "brk" : ""}" title="${nombre}${ddmm(iso)}"><span class="dow">${letra}</span>${d}</th>`;
   }
-  h += "<th title='% puntual'>%</th><th title='Días tarde'>⏱</th></tr></thead><tbody>";
+  diasHead += "<th title='% puntual'>%</th><th title='Días tarde'>⏱</th>";
+  let h = "<tbody>";
   let any = false;
   GRUPOS.filter(x => !g || x === g).forEach(grp => {
     const pts = pointsOf(grp).filter(p => !s || p === s);
     if (!pts.length) return;
-    h += `<tr class="g"><td colspan="${dias + 3}">${grp}</td></tr>`;
+    h += `<tr class="g"><th scope="rowgroup">${grp}</th>${diasHead}</tr>`;
     pts.forEach(p => {
       any = true; h += `<tr><td><a href="#" class="pt" data-g="${grp}" data-p="${p}">${p}</a></td>`;
       let o = 0, n = 0, l = 0;
