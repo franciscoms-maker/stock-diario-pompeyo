@@ -171,7 +171,11 @@ function render() {
   const [y, m] = mes.split("-").map(Number), dias = new Date(y, m, 0).getDate(), hoy = nowSt().date;
   const map = new Map(monthRows.map(r => [`${r.grupo}|${r.sucursal}|${+r.fecha.slice(8)}`, r]));
   let h = "<thead><tr><th>Punto</th>";
-  for (let d = 1; d <= dias; d++) h += `<th class="${`${mes}-${pad(d)}` === CAMBIO_REGLA ? "brk" : ""}" title="${ddmm(`${mes}-${pad(d)}`)}">${d}</th>`;
+  for (let d = 1; d <= dias; d++) {
+    const iso = `${mes}-${pad(d)}`, dow = new Date(iso + "T12:00:00Z").getUTCDay(); // 0 = domingo, 6 = sábado
+    const letra = dow === 6 ? "S" : dow === 0 ? "D" : "", nombre = dow === 6 ? "sábado " : dow === 0 ? "domingo " : "";
+    h += `<th class="${iso === CAMBIO_REGLA ? "brk" : ""}" title="${nombre}${ddmm(iso)}"><span class="dow">${letra}</span>${d}</th>`;
+  }
   h += "<th title='% puntual'>%</th><th title='Días tarde'>⏱</th></tr></thead><tbody>";
   let any = false;
   GRUPOS.filter(x => !g || x === g).forEach(grp => {
