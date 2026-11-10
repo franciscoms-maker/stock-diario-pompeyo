@@ -16,6 +16,9 @@ const normName = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/
 const CANON_MAP = new Map(GRUPOS.flatMap(g => CANON[g].map(n => [g + "|" + normName(n), n])));
 // Nombres alternativos que aparecen en el Excel → nombre canónico (normalizados)
 const ALIAS = { "SDA|subaru tobalaba": "subaru plaza tobalaba" };
+// Puntos cerrados: desde esa fecha dejan de contar (el historial anterior se conserva)
+const CIERRES = { "SDA|DFSK Arauco Maipu": "2026-11-04" };
+const cierreDe = (g, p) => CIERRES[g + "|" + p];
 const pad = n => String(n).padStart(2, "0");
 const ddmm = iso => iso.slice(8, 10) + "-" + iso.slice(5, 7) + "-" + iso.slice(0, 4);
 const pct = (a, n) => n ? Math.round(a / n * 100) : null;
@@ -59,7 +62,7 @@ function st(r) {
 }
 function dedupe(rows) { // una fila por (fecha, grupo, punto): prefiere Enviado, luego mayor Registrado
   const m = new Map();
-  rows.map(norm).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.fecha) && GRUPOS.includes(r.grupo)).forEach(r => {
+  rows.map(norm).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.fecha) && GRUPOS.includes(r.grupo) && !(cierreDe(r.grupo, r.sucursal) && r.fecha >= cierreDe(r.grupo, r.sucursal))).forEach(r => {
     const k = `${r.fecha}|${r.grupo}|${r.key}`, p = m.get(k);
     if (!p) return m.set(k, r);
     const rs = st(r) !== "no", ps = st(p) !== "no";
@@ -143,12 +146,12 @@ function renderSeg() {
   const v = $("fGrupo").value;
   $("seg").innerHTML = [["", "Todos"], ...GRUPOS.map(g => [g, g])].map(([k, t]) => `<button type="button" data-g="${k}" aria-pressed="${k === v}">${t}</button>`).join("");
 }
-function pointsOf(g) { // canónicos + cualquier nombre extra que aparezca en los datos
+function pointsOf(g, mes = $("fMes").value) { // canónicos + cualquier nombre extra que aparezca en los datos
   const extra = [...new Set(DATA.filter(r => r.grupo === g).map(r => r.sucursal))].filter(n => !CANON[g].includes(n));
-  return [...CANON[g], ...extra.sort()];
+  return [...CANON[g], ...extra.sort()].filter(p => { const c = cierreDe(g, p); return !c || !mes || `${mes}-01` < c; });
 }
 function fillSuc(sel) {
-  const g = $("fGrupo").value, s = GRUPOS.filter(x => !g || x === g).flatMap(pointsOf);
+  const g = $("fGrupo").value, s = GRUPOS.filter(x => !g || x === g).flatMap(x => pointsOf(x));
   $("fSuc").innerHTML = opt("", "Todos") + s.map(x => opt(x, x)).join("");
   if (sel && s.includes(sel)) $("fSuc").value = sel;
 }
@@ -187,10 +190,12 @@ function render() {
     if (!pts.length) return;
     h += `<tr class="g"><th scope="rowgroup">${grp}</th>${diasHead}</tr>`;
     pts.forEach(p => {
-      any = true; h += `<tr><td><a href="#" class="pt" data-g="${grp}" data-p="${p}">${p}</a></td>`;
+      const cierre = cierreDe(grp, p);
+      any = true; h += `<tr><td><a href="#" class="pt" data-g="${grp}" data-p="${p}">${p}</a>${cierre && cierre.startsWith(mes) ? ` <span class="sub">cerrada ${ddmm(cierre).slice(0, 5)}</span>` : ""}</td>`;
       let o = 0, n = 0, l = 0;
       for (let d = 1; d <= dias; d++) {
         const iso = `${mes}-${pad(d)}`, r = map.get(`${grp}|${p}|${d}`), cw = iso === CAMBIO_REGLA ? " brk" : "";
+        if (cierre && iso >= cierre) { h += `<td class="c cz${cw}" title="Sucursal cerrada desde ${ddmm(cierre)}"></td>`; continue; }
         if (!r) {
           const t = iso > hoy ? "Sin datos aún" : iso === hoy ? "Sin datos aún (cierre 14:00)" : "Sin dato (falló el cierre)";
           h += `<td class="c z${cw}" title="${t}">–</td>`; continue;
@@ -206,7 +211,8 @@ function render() {
   $("matrix").innerHTML = any ? h + "</tbody>" : "<tbody><tr><td>Sin datos para el filtro.</td></tr></tbody>";
 
   // Ranking por cumplimiento puntual
-  const rk = GRUPOS.filter(x => !g || x === g).flatMap(grp => pointsOf(grp).filter(p => !s || p === s).map(p => {
+  // El ranking solo incluye puntos abiertos al final del mes elegido
+  const rk = GRUPOS.filter(x => !g || x === g).flatMap(grp => pointsOf(grp).filter(p => (!s || p === s) && !(cierreDe(grp, p) && cierreDe(grp, p) <= `${mes}-${pad(dias)}`)).map(p => {
     const t = tot(rows.filter(r => r.grupo === grp && r.sucursal === p)); return { grp, p, ...t, v: pct(t.ok, t.n) };
   })).filter(r => r.n).sort((a, b) => b.v - a.v || b.n - a.n);
   $("rank").innerHTML = "<thead><tr><th>#</th><th>Punto</th><th>% puntual</th></tr></thead><tbody>" +
@@ -225,7 +231,8 @@ function detalle(grp, p) {
 // ---------- Init ----------
 $("fGrupo").onchange = () => { fillSuc(); renderSeg(); render(); };
 $("seg").onclick = e => { const b = e.target.closest("button[data-g]"); if (b) { $("fGrupo").value = b.dataset.g; $("fGrupo").onchange(); } };
-$("fMes").onchange = $("fSuc").onchange = render;
+$("fMes").onchange = () => { fillSuc($("fSuc").value); render(); };
+$("fSuc").onchange = render;
 $("refresh").onclick = () => load(true);
 $("login").onclick = async () => { await msal.loginPopup({ scopes: ["Files.Read.All"] }); load(); };
 $("matrix").onclick = e => { const a = e.target.closest("a.pt"); if (a) { e.preventDefault(); detalle(a.dataset.g, a.dataset.p); } };
